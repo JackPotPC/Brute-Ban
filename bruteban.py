@@ -3,17 +3,17 @@ import os
 import subprocess
 import re
 from jail.jails import Jails
-
 matchess = {'SSHD': 'sshd.service'}
 class BruteBan:
     def __init__(self):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._path = os.getcwd() + '/'
-        self._jails = Jails(self._path).get_option()
+        #Получает все активные инструкции
+        self._jails = Jails(self._path).get_options()
 
     #После добавления измненения команды journcalctl изменить этот метод
     def journalctl_option(self,instruction):
-            return instruction['journalctl'] == 'True' and instruction['log_path'] == 'False'
+        return instruction['log_path'] == 'journalctl'
 
     def search_for_matches(self,name):
         if name in matchess:
@@ -21,6 +21,8 @@ class BruteBan:
 
     def get_logs(self,name):
         sname = self.search_for_matches(name)
+        print(self._jails)
+        print(sname)
         if self.journalctl_option(self._jails[f'{name}']):
             result = subprocess.run(['journalctl', '-f', '-u', f'{sname}'], capture_output=True,                                text=True)
             return result.stdout
@@ -29,7 +31,7 @@ class BruteBan:
         for i in self._jails:
             process = self.get_logs(i)
             pattern = re.compile(
-                rf'{self._jails[i]["filter"]["regex"]}'
+                rf'{self._jails[i]["filter"][0][1]}'
             )
             unique_ips = set()
             try:
@@ -52,11 +54,12 @@ class BruteBan:
                                                    capture_output=True)
                                     print(match[1])
             except KeyboardInterrupt:
-                process.terminate()  # Завершаем процесс при прерывании
+                process.terminate() 
 
 
 def run():
     a = BruteBan()
+    print("nvim is working")
     while True:
         a.log_tracking()
 

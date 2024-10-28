@@ -1,6 +1,5 @@
 import configparser
 
-
 class JailParser:
     def __init__(self,path):
         self._config = configparser.ConfigParser()
